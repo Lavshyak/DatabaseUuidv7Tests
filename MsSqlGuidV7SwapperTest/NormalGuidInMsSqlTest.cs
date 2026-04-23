@@ -39,6 +39,13 @@ public class NormalGuidInMsSqlTest
         var normalGuid = new Guid(normalGuidHex);
         var msSqlFriendlyNormalGuid = normalGuid.EnsureGuidV7SwappedToMsSql();
 
+        {
+            var msSqlFriendlyNormalGuid1Hex = MsSqlTest.Program.ReorderUuid(normalGuidHex);
+            var msSqlFriendlyNormalGuid1 = new Guid(msSqlFriendlyNormalGuid1Hex);
+            Assert.Equal(msSqlFriendlyNormalGuid, msSqlFriendlyNormalGuid1);
+            Assert.Equal(msSqlFriendlyNormalGuid.ToString(), msSqlFriendlyNormalGuid1.ToString());
+        }
+
         _testOutputHelper.WriteLine($"{nameof(msSqlFriendlyNormalGuid)}:\n{msSqlFriendlyNormalGuid.ToString()}");
 
         {
