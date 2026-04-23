@@ -39,7 +39,7 @@ public class NormalGuidInMsSqlTest
         var normalGuid = new Guid(normalGuidHex);
         var msSqlFriendlyNormalGuid = normalGuid.EnsureGuidV7SwappedToMsSql();
 
-        _testOutputHelper.WriteLine($"{nameof(msSqlFriendlyNormalGuid)}:\n{msSqlFriendlyNormalGuid}");
+        _testOutputHelper.WriteLine($"{nameof(msSqlFriendlyNormalGuid)}:\n{msSqlFriendlyNormalGuid.ToString()}");
 
         {
             await using var connection = new SqlConnection(ConnectionString);
