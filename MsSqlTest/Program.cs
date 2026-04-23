@@ -24,8 +24,10 @@ public static class Program
     private static readonly string ConnectionString =
         $"Data Source=\"tcp:localhost, {SqlServerDatabaseFixture.Port}\";Initial Catalog=dotnet;User ID=sa;Password={SqlServerDatabaseFixture.Password};Trust Server Certificate=True";
 
+    //private const int NumberOfRuns = 15;
     private const int NumberOfRuns = 5;
     private const int RunSize = 1_000_000;
+    //private const int RunSize = 10_000;
     private const int TransactionChunkSize = 100_000;
     private const int SingleInsertChunkSize = 1_000;
 
@@ -206,8 +208,8 @@ public static class Program
         varOctet = (byte)(varOctet & 0b00111111);
         varOctet = (byte)(varOctet | 0b10111111);
         uuidv7[8] = varOctet;
-        return Convert.ToHexString(uuidv7); // Run1
-        //return ReorderUuid(Convert.ToHexString(uuidv7)); // Run2, Run3
+        return Convert.ToHexString(uuidv7); // Run1, UNIT TESTS
+        //return ReorderUuid(Convert.ToHexString(uuidv7)); // Run2, Run3 // COMMENTED (DO NOT USE) WHEN UNIT TESTS
     }
 
     public static string ReorderUuid(string uuid)
