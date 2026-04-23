@@ -14,6 +14,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgreSqlAnalyze", "Postgr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgreSqlTest", "PostgreSqlTest\PostgreSqlTest.csproj", "{E4A9B422-F349-4B82-BF8B-9695A906F300}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MsSqlFactory", "MsSqlFactory\MsSqlFactory.csproj", "{A318607D-C87C-4817-989E-A5B67F8CF519}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MsSqlGuidV7SwapperTest", "MsSqlGuidV7SwapperTest\MsSqlGuidV7SwapperTest.csproj", "{8E91E485-EF8A-4CB3-85DF-8A94A545A579}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AttachedFiles", "AttachedFiles", "{0FCB0781-0D2C-44A6-9A3A-67FFECD50C9E}"
+	ProjectSection(SolutionItems) = preProject
+		README.MD = README.MD
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +57,13 @@ Global
 		{E4A9B422-F349-4B82-BF8B-9695A906F300}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4A9B422-F349-4B82-BF8B-9695A906F300}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4A9B422-F349-4B82-BF8B-9695A906F300}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A318607D-C87C-4817-989E-A5B67F8CF519}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A318607D-C87C-4817-989E-A5B67F8CF519}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A318607D-C87C-4817-989E-A5B67F8CF519}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A318607D-C87C-4817-989E-A5B67F8CF519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E91E485-EF8A-4CB3-85DF-8A94A545A579}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E91E485-EF8A-4CB3-85DF-8A94A545A579}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E91E485-EF8A-4CB3-85DF-8A94A545A579}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E91E485-EF8A-4CB3-85DF-8A94A545A579}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

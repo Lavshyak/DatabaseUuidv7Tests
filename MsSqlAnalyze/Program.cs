@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using MsSqlFactory;
 
 namespace MsSqlAnalyze;
 
@@ -25,8 +26,8 @@ class Bucket
 
 public static class Program
 {
-    private const string ConnectionString =
-        "Data Source=\"tcp:localhost, 1433\";Initial Catalog=dotnet;User ID=sa;Password=StrongPassw0rd!;Trust Server Certificate=True";
+    private static readonly string ConnectionString =
+        $"Data Source=\"tcp:localhost, {SqlServerDatabaseFixture.Port}\";Initial Catalog=dotnet;User ID=sa;Password={SqlServerDatabaseFixture.Password};Trust Server Certificate=True";
 
     private const int BucketSize = 100_000;
 

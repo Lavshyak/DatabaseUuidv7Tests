@@ -7,6 +7,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Data.SqlClient;
+using MsSqlFactory;
 
 namespace MsSqlTest;
 
@@ -20,16 +21,30 @@ record Stats(
 
 public static class Program
 {
-    private const string ConnectionString =
-        "Data Source=\"tcp:localhost, 1433\";Initial Catalog=dotnet;User ID=sa;Password=StrongPassw0rd!;Trust Server Certificate=True";
+    private static readonly string ConnectionString =
+        $"Data Source=\"tcp:localhost, {SqlServerDatabaseFixture.Port}\";Initial Catalog=dotnet;User ID=sa;Password={SqlServerDatabaseFixture.Password};Trust Server Certificate=True";
 
-    private const int NumberOfRuns = 15;
+    private const int NumberOfRuns = 5;
     private const int RunSize = 1_000_000;
     private const int TransactionChunkSize = 100_000;
     private const int SingleInsertChunkSize = 1_000;
 
     static async Task Main(string[] args)
     {
+        Console.WriteLine($"Connection string used by Program: {ConnectionString}");
+        
+        {
+            await using var ssdf = new SqlServerDatabaseFixture();
+            await ssdf.InitializeAsync();
+            await using var dbContext = ssdf.CreateDbContext();
+            await ssdf.ResetDatabaseAsync();
+        }
+
+        {
+            await using var ssdf = new SqlServerDatabaseFixture();
+            await ssdf.InitializeAsync();
+        }
+
         var alreadyInserted = await ReadAllAsync();
         for (int i = 1; i <= NumberOfRuns; i++)
         {
@@ -174,7 +189,7 @@ public static class Program
         return uuids.Length;
     }
 
-    static string GenerateUuidV7()
+    public static string GenerateUuidV7()
     {
         Span<byte> uuidv7 = stackalloc byte[16];
         ulong unixTimeTicks = (ulong)DateTimeOffset.UtcNow.Subtract(DateTimeOffset.UnixEpoch).Ticks;
@@ -191,47 +206,55 @@ public static class Program
         varOctet = (byte)(varOctet & 0b00111111);
         varOctet = (byte)(varOctet | 0b10111111);
         uuidv7[8] = varOctet;
-        return Convert.ToHexString(uuidv7);
+        return Convert.ToHexString(uuidv7); // Run1
+        //return ReorderUuid(Convert.ToHexString(uuidv7)); // Run2, Run3
     }
 
-static string ReorderUuid(string uuid)
-{
-    var src = Convert.FromHexString(uuid);
-    var dst = new byte[16];
-    // reorder for SQL SERVER Sort order
-    dst[0] = src[12];
-    dst[1] = src[13];
-    dst[2] = src[14];
-    dst[3] = src[15];
-    dst[4] = src[10];
-    dst[5] = src[11];
-    dst[6] = src[8];
-    dst[7] = src[9];
-    dst[8] = src[6];
-    dst[9] = src[7];
-    dst[10] = src[0];
-    dst[11] = src[1];
-    dst[12] = src[2];
-    dst[13] = src[3];
-    dst[14] = src[4];
-    dst[15] = src[5];
-    // reorder for guid internal layout
-    var tmp0 = dst[0];
-    var tmp1 = dst[1];
-    var tmp2 = dst[2];
-    var tmp3 = dst[3];
-    dst[0] = tmp3;
-    dst[1] = tmp2;
-    dst[2] = tmp1;
-    dst[3] = tmp0;
-    var tmp4 = dst[4];
-    var tmp5 = dst[5];
-    dst[4] = tmp5;
-    dst[5] = tmp4;
-    var tmp6 = dst[6];
-    var tmp7 = dst[7];
-    dst[6] = tmp7;
-    dst[7] = tmp6;
-    return Convert.ToHexString(dst);
-}
+    public static string ReorderUuid(string uuid)
+    {
+        var src = Convert.FromHexString(uuid);
+        var dst = new byte[16];
+        // reorder for SQL SERVER Sort order
+        dst[0] = src[12];
+        dst[1] = src[13];
+        dst[2] = src[14];
+        dst[3] = src[15];
+        dst[4] = src[10];
+        dst[5] = src[11];
+        dst[6] = src[8];
+        dst[7] = src[9];
+        dst[8] = src[6];
+        dst[9] = src[7];
+        dst[10] = src[0];
+        dst[11] = src[1];
+        dst[12] = src[2];
+        dst[13] = src[3];
+        dst[14] = src[4];
+        dst[15] = src[5];
+        // reorder for guid internal layout
+        //bool reorderForGuidInternalLayout = true; // Run1 (not used, unreachable), Run2
+        bool reorderForGuidInternalLayout = false; // Run3
+        if (reorderForGuidInternalLayout)
+        {
+            // Run 3 shows that you don't need to do this if you will do `new Guid(convertedToHexString)`
+            var tmp0 = dst[0];
+            var tmp1 = dst[1];
+            var tmp2 = dst[2];
+            var tmp3 = dst[3];
+            dst[0] = tmp3;
+            dst[1] = tmp2;
+            dst[2] = tmp1;
+            dst[3] = tmp0;
+            var tmp4 = dst[4];
+            var tmp5 = dst[5];
+            dst[4] = tmp5;
+            dst[5] = tmp4;
+            var tmp6 = dst[6];
+            var tmp7 = dst[7];
+            dst[6] = tmp7;
+            dst[7] = tmp6;
+        }
+        
+        return Convert.ToHexString(dst);
+    }
 }

@@ -1,0 +1,75 @@
+C:/CodeProjects/ThirdPartyExamples/DatabaseUuidv7Tests/MsSqlTest/bin/Debug/net8.0/MsSqlTest.exe
+Connection string used by Program: Data Source="tcp:localhost, 5985";Initial Catalog=dotnet;User ID=sa;Password=YourStrong!Passw0rd;Trust Server Certificate=True
+ContainerName: MsSqlGuidTest-1
+[testcontainers.org 00:00:00.13] Connected to Docker:
+  Host: npipe://./pipe/docker_engine
+  Server Version: 28.1.1
+  Kernel Version: 5.15.167.4-microsoft-standard-WSL2
+  API Version: 1.49
+  Operating System: Docker Desktop
+  Total Memory: 15.31 GB
+  Labels: 
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+[testcontainers.org 00:00:00.38] Docker container e0e1570b500f created
+[testcontainers.org 00:00:00.52] Start Docker container e0e1570b500f
+[testcontainers.org 00:00:00.88] Wait for Docker container e0e1570b500f to complete readiness checks
+[testcontainers.org 00:00:00.91] Execute "/bin/sh -c find /opt/mssql-tools*/bin/sqlcmd -type f -print -quit" at Docker container e0e1570b500f
+[testcontainers.org 00:00:01.03] Execute "/opt/mssql-tools18/bin/sqlcmd -C -Q SELECT 1;" at Docker container e0e1570b500f
+[testcontainers.org 00:00:07.63] Execute "/opt/mssql-tools18/bin/sqlcmd -C -Q SELECT 1;" at Docker container e0e1570b500f
+[testcontainers.org 00:00:07.71] Docker container e0e1570b500f ready
+Generated connection string: Server=127.0.0.1,5985;Database=master;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
+Hardcoded connection string: Server=localhost,5985;Database=dotnet;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;
+[testcontainers.org 00:00:09.96] Stop Docker container e0e1570b500f
+[testcontainers.org 00:00:20.69] Stop Docker container e0e1570b500f
+ContainerName: MsSqlGuidTest-1
+Hardcoded connection string: Server=localhost,5985;Database=dotnet;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;
+------------------------------------------------
+{
+  "RunNumber": 1,
+  "CreatedAt": "2026-04-22T13:00:28.6709149+00:00",
+  "InsertedInIteration": 1000000,
+  "InsertedTotal": 1000000,
+  "InsertDuration": "00:00:58.5838995",
+  "SelectDuration": "00:00:00.6436897"
+}
+------------------------------------------------
+{
+  "RunNumber": 2,
+  "CreatedAt": "2026-04-22T13:01:28.1141252+00:00",
+  "InsertedInIteration": 1000000,
+  "InsertedTotal": 2000000,
+  "InsertDuration": "00:00:58.2051738",
+  "SelectDuration": "00:00:01.2165621"
+}
+------------------------------------------------
+{
+  "RunNumber": 3,
+  "CreatedAt": "2026-04-22T13:02:28.692609+00:00",
+  "InsertedInIteration": 1000000,
+  "InsertedTotal": 3000000,
+  "InsertDuration": "00:00:58.7209477",
+  "SelectDuration": "00:00:01.8555553"
+}
+------------------------------------------------
+{
+  "RunNumber": 4,
+  "CreatedAt": "2026-04-22T13:03:29.8063818+00:00",
+  "InsertedInIteration": 1000000,
+  "InsertedTotal": 4000000,
+  "InsertDuration": "00:00:58.5438704",
+  "SelectDuration": "00:00:02.5678260"
+}
+------------------------------------------------
+{
+  "RunNumber": 5,
+  "CreatedAt": "2026-04-22T13:04:32.9857823+00:00",
+  "InsertedInIteration": 1000000,
+  "InsertedTotal": 5000000,
+  "InsertDuration": "00:00:59.8970132",
+  "SelectDuration": "00:00:03.2802160"
+}
+------------------------------------------------
+DONE
+
+Process finished with exit code 0.
+
