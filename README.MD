@@ -8,7 +8,7 @@ Configurations are located in:
 MsSqlTest.Program has configuration about NumberOfRuns, etc.
 
 The MsSqlTest project automatically launches and uses Docker container.\
-Run1 and Run2 produces bad results. Run3 is good. \
+Run1 produces bad results. Run2 produces good results for DBMS but bad for unit tests. Run3 is good everywhere. \
 To test how GUIDs behave in the DBMS, run MsSqlTest and then MsSqlAnalyze. \
 To unit test solutions about GUIDs, run MsSqlGuidV7SwapperTest with Run3 only configuration.\
 MsSqlTest and MsSqlFactory have .txt files with results of running on my machine.
