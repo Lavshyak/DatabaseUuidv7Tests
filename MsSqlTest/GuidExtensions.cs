@@ -1,38 +1,51 @@
-﻿namespace MsSqlTest;
+﻿using System.Diagnostics;
+
+namespace MsSqlTest;
 
 public static class GuidExtensions
 {
+    /// <summary>
+    /// maybe
+    /// </summary>
     public static bool IsV4(this Guid guid)
     {
-        // 00000000-0000-F000-0000-000000000000.
-        // return guid.Version == 7; .net 10
+        // 6 (normal) 00000000-0000-F000-0000-000000000000.
+        // return guid.Version == 4; .net 10
         
         Span<byte> bytes = stackalloc byte[16];
         guid.TryWriteBytes(bytes);
+        // 7 (WriteBytes) 00000000-0000-00F0-0000-000000000000.
 
         return bytes[7] >>> 4 == 4;
     }
     
+    /// <summary>
+    /// maybe
+    /// </summary>
     public static bool IsV7(this Guid guid)
     {
-        // 00000000-0000-F000-0000-000000000000.
         // return guid.Version == 7; .net 10
         
         Span<byte> bytes = stackalloc byte[16];
         guid.TryWriteBytes(bytes);
-
+        
         return bytes[7] >>> 4 == 7;
     }
     
+    /// <summary>
+    /// maybe
+    /// </summary>
     public static bool IsV7SwappedForMsSql(this Guid guid)
     {
         Span<byte> bytes = stackalloc byte[16];
         guid.TryWriteBytes(bytes);
 
+        // 6 (normal guid) -> 7 (WriteBytes) -> 6 (reorder for internal) -> 8 (reorder for SQL SERVER)
+        
         return bytes[8] >>> 4 == 7;
     }
 
-    public static Guid EnsureGuidV7(this Guid guid)
+    /*public static Guid EnsureGuidV7(this Guid guid)
     {
         if (!guid.IsV7())
         {
@@ -44,13 +57,13 @@ public static class GuidExtensions
     
     public static Guid EnsureGuidV7SwappedToMsSql(this Guid guid)
     {
-        if (!guid.IsV7SwappedForMsSql())
+        if (!guid.IsV7SwappedForMsSql() || guid.IsV7())
         {
             return SwapV7ToMsSqlServer(guid);
         }
 
         return guid;
-    }
+    }*/
 
     private static void ReorderBytesForGuidInternalLayout(Span<byte> src)
     {
@@ -82,13 +95,16 @@ public static class GuidExtensions
         Span<byte> src = stackalloc byte[16];
         guidV7.TryWriteBytes(src);
         
-        // src is not normal guid v7 now.
+        Debug.WriteLine(Convert.ToHexString(src));
+        
+        // `Hex(src)` is not normal guid v7 now.
         // `Hex(src)` != `guidV7.ToString()`
         
         // reorder because of guid internal layout (unit Test3)
         ReorderBytesForGuidInternalLayout(src);
+        Debug.WriteLine(Convert.ToHexString(src));
         
-        // src is normal guid bytes now
+        // `Hex(src)` is normal guid now
         // `Hex(src)` == `guidV7.ToString()`
         
         Span<byte> dst = stackalloc byte[16];
@@ -114,12 +130,15 @@ public static class GuidExtensions
         dst[14] = src[4];
         dst[15] = src[5];
         
-        // dst is normal ms sql friendly guid bytes now.
+        Debug.WriteLine(Convert.ToHexString(dst));
+        // `Hex(dst)` is normal ms sql friendly guid now.
         
         // reorder because of guid internal layout
         ReorderBytesForGuidInternalLayout(dst);
         
-        // dst is not normal any guid bytes now.
+        Debug.WriteLine(Convert.ToHexString(dst));
+        
+        // `Hex(dst)` is not normal any guid now.
         // dst is `new Guid(bytes)` friendly now.
         
         return new Guid(dst);

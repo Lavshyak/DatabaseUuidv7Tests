@@ -175,11 +175,11 @@ public class UnitTest1
             Assert.Equal(originalGuidV7Text, ToNormalizedShortGuidText(originalGuidV7));
             Assert.Equal(originalGuidV7, Guid.Parse(originalGuidV7Text));
 
-            var guidV7SwappedToMsSqlServer = originalGuidV7.EnsureGuidV7SwappedToMsSql();
+            var guidV7SwappedToMsSqlServer = originalGuidV7.SwapV7ToMsSqlServer();
             Assert.True(guidV7SwappedToMsSqlServer.IsV7SwappedForMsSql());
             Assert.Equal(originalGuidV7ReorderedText, ToNormalizedShortGuidText(guidV7SwappedToMsSqlServer));
 
-            var guidV7SwappedFromMsSqlServer = guidV7SwappedToMsSqlServer.EnsureGuidV7();
+            var guidV7SwappedFromMsSqlServer = guidV7SwappedToMsSqlServer.SwapV7FromMsSqlServer();
             Assert.True(guidV7SwappedFromMsSqlServer.IsV7());
             Assert.Equal(originalGuidV7, guidV7SwappedFromMsSqlServer);
             Assert.Equal(originalGuidV7Text, ToNormalizedShortGuidText(guidV7SwappedFromMsSqlServer));

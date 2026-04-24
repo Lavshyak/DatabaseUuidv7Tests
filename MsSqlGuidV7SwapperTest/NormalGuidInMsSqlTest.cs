@@ -37,7 +37,7 @@ public class NormalGuidInMsSqlTest
 
         var normalGuidHex = MsSqlTest.Program.GenerateUuidV7();
         var normalGuid = new Guid(normalGuidHex);
-        var msSqlFriendlyNormalGuid = normalGuid.EnsureGuidV7SwappedToMsSql();
+        var msSqlFriendlyNormalGuid = normalGuid.SwapV7ToMsSqlServer();
 
         {
             var msSqlFriendlyNormalGuid1Hex = MsSqlTest.Program.ReorderUuid(normalGuidHex);
