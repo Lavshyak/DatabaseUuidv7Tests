@@ -118,6 +118,18 @@ public class NormalGuidInMsSqlTest
         }
     }
     
+    /*
+        ConnectionString:
+        Data Source="tcp:localhost, 5988";Initial Catalog=dotnet;User ID=sa;Password=YourStrong!Passw0rd;Trust Server Certificate=True
+        initialGuids:
+        01000000-0000-0000-0000-000000000000
+        00010000-0000-0000-0000-000000000000
+
+
+        returned guids:
+        01000000-0000-0000-0000-000000000000
+        00010000-0000-0000-0000-000000000000
+    */
     [Fact]
     public async Task Test5()
     {
