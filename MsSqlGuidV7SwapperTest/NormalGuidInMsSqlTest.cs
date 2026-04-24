@@ -117,4 +117,106 @@ public class NormalGuidInMsSqlTest
             Assert.False(await reader.ReadAsync());
         }
     }
+    
+    [Fact]
+    public async Task Test5()
+    {
+        _testOutputHelper.WriteLine($"{nameof(ConnectionString)}:\n{ConnectionString}");
+        {
+            await using var ssdf = new SqlServerDatabaseFixture();
+            await ssdf.InitializeAsync();
+            await using var dbContext = ssdf.CreateDbContext();
+            await ssdf.ResetDatabaseAsync();
+        }
+
+        {
+            await using var ssdf = new SqlServerDatabaseFixture();
+            await ssdf.InitializeAsync();
+        }
+
+        byte[][] initialGuidBytes = [
+            new byte[16]{1,0,0,0, 0,0, 0,0, 0,0, 0,0,0,0,0,0}, 
+            new byte[16]{0,1,0,0, 0,0, 0,0, 0,0, 0,0,0,0,0,0},
+        ];
+        
+        var initialGuidHexes = initialGuidBytes.Select(b => Convert.ToHexString(b)).ToArray();
+        
+        Guid[] initialGuids = initialGuidHexes.Select(s => new Guid(s)).ToArray();
+        
+        _testOutputHelper.WriteLine($"{nameof(initialGuids)}:\n{string.Join("\n", initialGuids.Select(g => g.ToString()))}\n\n");
+
+        {
+            await using var connection = new SqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+            if (transaction is not SqlTransaction sqlTransaction)
+            {
+                throw new InvalidOperationException();
+            }
+
+            {
+                Guid[] uuids = initialGuids;
+                long alreadyInserted = 0;
+
+                var requestBuilder = new StringBuilder("insert into uuids (uuid, [order]) VALUES ");
+                var firstRecord = true;
+                for (int i = 0; i < uuids.Length; i++)
+                {
+                    if (firstRecord)
+                    {
+                        requestBuilder.Append($"(@u{i},@o{i})");
+                        firstRecord = false;
+                    }
+                    else
+                    {
+                        requestBuilder.Append($",(@u{i},@o{i})");
+                    }
+                }
+
+                requestBuilder.Append(';');
+                var sql = requestBuilder.ToString();
+                await using var cmd = connection.CreateCommand();
+                cmd.Transaction = sqlTransaction;
+                cmd.CommandText = sql;
+                for (int i = 0; i < uuids.Length; i++)
+                {
+                    var uuid = uuids[i];
+                    var order = alreadyInserted + i;
+                    cmd.Parameters.AddWithValue($"@u{i}", uuid);
+                    cmd.Parameters.AddWithValue($"@o{i}", order);
+                }
+
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+
+        {
+            await using var connection = new SqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText = "select uuid, [order], LOWER(CAST(uuid AS VARCHAR(36))) AS LowercaseGuid from uuids order by uuid ASC;";
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            _testOutputHelper.WriteLine($"returned guids:");
+            for (int i = 0; i < initialGuids.Length; i++)
+            {
+                var initialGuid = initialGuids[i];
+                
+                Assert.True(await reader.ReadAsync());
+                Assert.Equal(i, reader.GetInt64(1));
+            
+                var returnedGuid = reader.GetGuid(0);
+                _testOutputHelper.WriteLine(returnedGuid.ToString());
+                Assert.Equal(initialGuid, returnedGuid);
+                Assert.Equal(initialGuid.ToString(), returnedGuid.ToString());
+            
+                var returnedGuidText = reader.GetString(2);
+                Assert.Equal(initialGuid.ToString(), returnedGuidText);
+            }
+            
+            Assert.False(await reader.ReadAsync());
+        }
+    }
 }
