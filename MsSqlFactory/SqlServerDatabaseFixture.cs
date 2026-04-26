@@ -13,14 +13,14 @@ public sealed class SqlServerDatabaseFixture : IAsyncDisposable
     private string? _connectionString;
 
     //public const int Port = 5985; // Run1
-    public const int Port = 5986; // Run2
+    //public const int Port = 5986; // Run2
     //public const int Port = 5987; // Run3
-    //public const int Port = 5988; // Run3UnitTest1
+    public const int Port = 5988; // Run3UnitTest1
     public const string Password = "YourStrong!Passw0rd";
     //public const string ContainerName = "MsSqlGuidTest-1"; // Run1
-    public const string ContainerName = "MsSqlGuidTest-2"; // Run2
+    //public const string ContainerName = "MsSqlGuidTest-2"; // Run2
     //public const string ContainerName = "MsSqlGuidTest-3"; // Run3
-    //public const string ContainerName = "MsSqlGuidTest-3-UnitTest-1"; // Run3UnitTest1
+    public const string ContainerName = "MsSqlGuidTest-3-UnitTest-1"; // Run3UnitTest1
 
     public SqlServerDatabaseFixture()
     {

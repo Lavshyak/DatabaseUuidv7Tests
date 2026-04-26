@@ -262,4 +262,66 @@ public class NormalGuidInMsSqlTest
             Assert.Equal(v7ShortHexExpected, v7UnswappedFromMsSql.ToString().Replace("-", "").ToUpper());
         }
     }
+    
+    [Fact]
+    public async Task V7Sorting()
+    {
+        List<string> v7ShortHexesExpected = new();
+        for (int i = 0; i < 1_000; i++)
+        {
+            await Task.Delay(1);
+            var v7ShortHexExpected= MsSqlTest.Program.GenerateUuidV7();
+            v7ShortHexesExpected.Add(v7ShortHexExpected);
+        }
+        var v7ShortHexesSorted = v7ShortHexesExpected.ToArray();
+        Array.Sort(v7ShortHexesSorted);
+        for (int i = 0; i < v7ShortHexesExpected.Count; i++)
+        {
+            var expected = v7ShortHexesExpected[i];
+            var actual = v7ShortHexesSorted[i];
+            Assert.Equal(expected, actual);
+        }
+
+        var v7GuidsExpected = v7ShortHexesExpected.Select(s => new Guid(s)).ToArray();
+        var v7GuidsSorted = v7GuidsExpected.ToArray();
+        Array.Sort(v7GuidsSorted);
+        for (int i = 0; i < v7GuidsSorted.Length; i++)
+        {
+            var expected = v7GuidsExpected[i];
+            var actual = v7GuidsSorted[i];
+            Assert.Equal(expected, actual);
+            Assert.Equal(expected.ToString(), actual.ToString());
+        }
+        
+        var v7MsSQlGuidsExpected = v7GuidsExpected.Select(g => g.SwapV7ToMsSqlServer()).ToArray();
+        {
+            await using var ssdf = new SqlServerDatabaseFixture();
+            await ssdf.InitializeAsync();
+            await using var dbContext = ssdf.CreateDbContext();
+            await ssdf.ResetDatabaseAsync();
+        }
+
+        {
+            await using var ssdf = new SqlServerDatabaseFixture();
+            await ssdf.InitializeAsync();
+        }
+        await InsertToMsSql(v7MsSQlGuidsExpected, 0);
+        await SelectFromMsSql(
+            "select uuid, [order], LOWER(CAST(uuid AS VARCHAR(36))) AS LowercaseGuid from uuids order by uuid ASC",
+            v7MsSQlGuidsExpected.Length,
+            (reader, i) =>
+            {
+                var expected = v7MsSQlGuidsExpected[i];
+
+                Assert.Equal(i, reader.GetInt64(1));
+
+                var returnedGuid = reader.GetGuid(0);
+                Assert.Equal(expected, returnedGuid);
+                Assert.Equal(expected.ToString(), returnedGuid.ToString());
+
+                var returnedGuidText = reader.GetString(2);
+                Assert.Equal(expected.ToString(), returnedGuidText);
+            }
+        );
+    }
 }
