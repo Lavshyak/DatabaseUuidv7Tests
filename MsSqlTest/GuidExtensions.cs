@@ -84,31 +84,17 @@ public static class GuidExtensions
         src[6] = tmp7;
         src[7] = tmp6;
     }
-    
-    public static Guid SwapV7ToMsSqlServer(this Guid guidV7)
+
+    public static Guid SwapToMsSqlServer(this Guid guid)
     {
-        if (!guidV7.IsV7())
-        {
-            throw new ArgumentException("The specified GUID does not match 7 version.");
-        }
-        
         Span<byte> src = stackalloc byte[16];
-        guidV7.TryWriteBytes(src);
-        
-        Debug.WriteLine(Convert.ToHexString(src));
-        
-        // `Hex(src)` is not normal guid v7 now.
-        // `Hex(src)` != `guidV7.ToString()`
-        
-        // reorder because of guid internal layout (unit Test3)
+        guid.TryWriteBytes(src);
+
+        // reorder because TryWriteBytes writes internal layout of .net Guid as is
         ReorderBytesForGuidInternalLayout(src);
-        Debug.WriteLine(Convert.ToHexString(src));
-        
-        // `Hex(src)` is normal guid now
-        // `Hex(src)` == `guidV7.ToString()`
         
         Span<byte> dst = stackalloc byte[16];
-        // reorder for SQL SERVER Sort order
+        // reorder for SQL SERVER Sort order but without taking into account group endiannesses
         dst[0] = src[12];
         dst[1] = src[13];
         dst[2] = src[14];
@@ -130,30 +116,28 @@ public static class GuidExtensions
         dst[14] = src[4];
         dst[15] = src[5];
         
-        Debug.WriteLine(Convert.ToHexString(dst));
-        // `Hex(dst)` is normal ms sql friendly guid now.
-        
-        // reorder because of guid internal layout
+        // reorder for SQL SERVER group endianness. It's a coincidence that this method works here too
         ReorderBytesForGuidInternalLayout(dst);
         
-        Debug.WriteLine(Convert.ToHexString(dst));
-        
-        // `Hex(dst)` is not normal any guid now.
-        // dst is `new Guid(bytes)` friendly now.
+        // reorder because new Guid(bytes) writes to internal layout of .net Guid as is
+        ReorderBytesForGuidInternalLayout(dst);
         
         return new Guid(dst);
     }
-    
-    public static Guid SwapV7FromMsSqlServer(this Guid swappedGuidV7)
+
+    public static Guid SwapFromMsSqlServer(this Guid guid)
     {
         Span<byte> src = stackalloc byte[16];
-        swappedGuidV7.TryWriteBytes(src);
+        guid.TryWriteBytes(src);
         
+        ReorderBytesForGuidInternalLayout(src);
+        
+        // reorder for SQL SERVER group endianness.
         ReorderBytesForGuidInternalLayout(src);
         
         Span<byte> dst = stackalloc byte[16];
         
-        // reorder from SQL SERVER Sort order
+        // reorder from SQL SERVER Sort order but without taking into account group endiannesses
         dst[0] = src[10];
         dst[1] = src[11];
         dst[2] = src[12];
@@ -180,6 +164,22 @@ public static class GuidExtensions
         ReorderBytesForGuidInternalLayout(dst);
         
         var newGuid = new Guid(dst);
+        return newGuid;
+    }
+
+    public static Guid SwapV7ToMsSqlServer(this Guid guidV7)
+    {
+        if (!guidV7.IsV7())
+        {
+            throw new ArgumentException("The specified GUID does not match 7 version.");
+        }
+
+        return SwapToMsSqlServer(guidV7);
+    }
+    
+    public static Guid SwapV7FromMsSqlServer(this Guid swappedGuidV7)
+    {
+        var newGuid = SwapFromMsSqlServer(swappedGuidV7);
         
         if (!newGuid.IsV7())
         {
