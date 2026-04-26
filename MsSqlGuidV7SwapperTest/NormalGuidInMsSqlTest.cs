@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 
 namespace MsSqlGuidV7SwapperTest;
 
+[Collection("NormalGuidInMsSqlTest")]
 public class NormalGuidInMsSqlTest
 {
     private readonly ITestOutputHelper _testOutputHelper;
@@ -56,10 +57,10 @@ public class NormalGuidInMsSqlTest
 
     private static readonly IReadOnlyCollection<string> MsSqlFromSmallToBigUuidsShortHexes =
         MsSqlFromSmallToBigUuidsBytes.Select(b => Convert.ToHexString(b.ToArray())).ToArray();
-    
+
     private static readonly IReadOnlyCollection<Guid> MsSqlFromSmallToBigGuids =
         MsSqlFromSmallToBigUuidsShortHexes.Select(s => new Guid(s)).ToArray();
-    
+
     private static readonly IReadOnlyCollection<IReadOnlyCollection<byte>> NormalFromSmallToBigUuidsBytes =
         new byte[16][]
         {
@@ -89,14 +90,13 @@ public class NormalGuidInMsSqlTest
 
     private static readonly IReadOnlyCollection<string> NormalFromSmallToBigUuidsShortHexes =
         NormalFromSmallToBigUuidsBytes.Select(b => Convert.ToHexString(b.ToArray())).ToArray();
-    
+
     private static readonly IReadOnlyCollection<Guid> NormalFromSmallToBigGuids =
         NormalFromSmallToBigUuidsShortHexes.Select(s => new Guid(s)).ToArray();
 
     [Fact]
     public void NormalFromSmallToBigGuidsIsHardcodedRight()
     {
-        
         var expectedNormalGuids = NormalFromSmallToBigGuids.ToArray();
         var sortedGuids = expectedNormalGuids.ToArray();
         Array.Sort(sortedGuids);
@@ -109,7 +109,69 @@ public class NormalGuidInMsSqlTest
             Assert.Equal(expected.ToString(), actual.ToString());
         }
     }
-    
+
+    private async Task InsertToMsSql(Guid[] uuids, long alreadyInserted)
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        if (transaction is not SqlTransaction sqlTransaction)
+        {
+            throw new InvalidOperationException();
+        }
+
+        {
+            var requestBuilder = new StringBuilder("insert into uuids (uuid, [order]) VALUES ");
+            var firstRecord = true;
+            for (int i = 0; i < uuids.Length; i++)
+            {
+                if (firstRecord)
+                {
+                    requestBuilder.Append($"(@u{i},@o{i})");
+                    firstRecord = false;
+                }
+                else
+                {
+                    requestBuilder.Append($",(@u{i},@o{i})");
+                }
+            }
+
+            requestBuilder.Append(';');
+            var sql = requestBuilder.ToString();
+            await using var cmd = connection.CreateCommand();
+            cmd.Transaction = sqlTransaction;
+            cmd.CommandText = sql;
+            for (int i = 0; i < uuids.Length; i++)
+            {
+                var uuid = uuids[i];
+                var order = alreadyInserted + i;
+                cmd.Parameters.AddWithValue($"@u{i}", uuid);
+                cmd.Parameters.AddWithValue($"@o{i}", order);
+            }
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
+    }
+
+    private async Task SelectFromMsSql(string commandText, long expectedLength, Action<SqlDataReader, long> inBody)
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = commandText;
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        for (int i = 0; i < expectedLength; i++)
+        {
+            Assert.True(await reader.ReadAsync());
+            inBody(reader, i);
+        }
+
+        Assert.False(await reader.ReadAsync());
+    }
+
     [Fact]
     public async Task MsSqlFromSmallToBigGuidsIsHardcodedRight()
     {
@@ -128,71 +190,15 @@ public class NormalGuidInMsSqlTest
 
         Guid[] expectedMsSqlGuids = MsSqlFromSmallToBigGuids.ToArray();
 
-        _testOutputHelper.WriteLine(
-            $"{nameof(expectedMsSqlGuids)}:\n{string.Join("\n", expectedMsSqlGuids.Select(g => g.ToString()))}\n\n");
+        await InsertToMsSql(expectedMsSqlGuids, 0);
 
-        {
-            await using var connection = new SqlConnection(ConnectionString);
-            await connection.OpenAsync();
-            await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-            if (transaction is not SqlTransaction sqlTransaction)
-            {
-                throw new InvalidOperationException();
-            }
-
-            {
-                Guid[] uuids = expectedMsSqlGuids;
-                long alreadyInserted = 0;
-
-                var requestBuilder = new StringBuilder("insert into uuids (uuid, [order]) VALUES ");
-                var firstRecord = true;
-                for (int i = 0; i < uuids.Length; i++)
-                {
-                    if (firstRecord)
-                    {
-                        requestBuilder.Append($"(@u{i},@o{i})");
-                        firstRecord = false;
-                    }
-                    else
-                    {
-                        requestBuilder.Append($",(@u{i},@o{i})");
-                    }
-                }
-
-                requestBuilder.Append(';');
-                var sql = requestBuilder.ToString();
-                await using var cmd = connection.CreateCommand();
-                cmd.Transaction = sqlTransaction;
-                cmd.CommandText = sql;
-                for (int i = 0; i < uuids.Length; i++)
-                {
-                    var uuid = uuids[i];
-                    var order = alreadyInserted + i;
-                    cmd.Parameters.AddWithValue($"@u{i}", uuid);
-                    cmd.Parameters.AddWithValue($"@o{i}", order);
-                }
-
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await transaction.CommitAsync();
-        }
-
-        {
-            await using var connection = new SqlConnection(ConnectionString);
-            await connection.OpenAsync();
-            await using var cmd = connection.CreateCommand();
-            // language=c# схему лень выбирать
-            cmd.CommandText =
-                "select uuid, [order], LOWER(CAST(uuid AS VARCHAR(36))) AS LowercaseGuid from uuids order by uuid ASC";
-            await using var reader = await cmd.ExecuteReaderAsync();
-
-            _testOutputHelper.WriteLine($"returned guids:");
-            for (int i = 0; i < expectedMsSqlGuids.Length; i++)
+        await SelectFromMsSql(
+            "select uuid, [order], LOWER(CAST(uuid AS VARCHAR(36))) AS LowercaseGuid from uuids order by uuid ASC",
+            expectedMsSqlGuids.Length,
+            (reader, i) =>
             {
                 var initialGuid = expectedMsSqlGuids[i];
 
-                Assert.True(await reader.ReadAsync());
                 Assert.Equal(i, reader.GetInt64(1));
 
                 var returnedGuid = reader.GetGuid(0);
@@ -203,9 +209,10 @@ public class NormalGuidInMsSqlTest
                 var returnedGuidText = reader.GetString(2);
                 Assert.Equal(initialGuid.ToString(), returnedGuidText);
             }
+        );
 
-            Assert.False(await reader.ReadAsync());
-        }
+        _testOutputHelper.WriteLine(
+            $"{nameof(expectedMsSqlGuids)}:\n{string.Join("\n", expectedMsSqlGuids.Select(g => g.ToString()))}\n\n");
     }
 
     [Fact]
@@ -235,6 +242,24 @@ public class NormalGuidInMsSqlTest
             Assert.Equal(expectedGuidMsSql.ToString(), swappedToMsSqlGuid.ToString());
             Assert.Equal(guid, swappedFromMsSqlGuid);
             Assert.Equal(guid.ToString(), swappedFromMsSqlGuid.ToString());
+        }
+    }
+
+    [Fact]
+    public async Task V7Test()
+    {
+        for (int i = 0; i < 1_000_000; i++)
+        {
+            var v7ShortHexExpected= MsSqlTest.Program.GenerateUuidV7();
+            var v7ReorderedShortHexExpected = MsSqlTest.Program.ReorderUuid(v7ShortHexExpected);
+
+            var v7 = new Guid(v7ShortHexExpected);
+            var v7SwappedToMsSql = v7.SwapV7ToMsSqlServer();
+            var v7UnswappedFromMsSql = v7SwappedToMsSql.SwapV7FromMsSqlServer();
+            
+            Assert.Equal(v7ShortHexExpected, v7.ToString().Replace("-", "").ToUpper());
+            Assert.Equal(v7ReorderedShortHexExpected, v7SwappedToMsSql.ToString().Replace("-", "").ToUpper());
+            Assert.Equal(v7ShortHexExpected, v7UnswappedFromMsSql.ToString().Replace("-", "").ToUpper());
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿# ms sql
+﻿readme неактуально
+
+# ms sql
 Launched in 3 configurations (Run1, Run2, Run3).\
 Configurations are located in:
 - [MsSqlFactory/SqlServerDatabaseFixture.cs#L15-L21](./MsSqlFactory/SqlServerDatabaseFixture.cs#L15-L21) (ms sql docker container config).

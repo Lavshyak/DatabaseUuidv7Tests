@@ -208,8 +208,7 @@ public static class Program
         varOctet = (byte)(varOctet & 0b00111111);
         varOctet = (byte)(varOctet | 0b10111111);
         uuidv7[8] = varOctet;
-        return Convert.ToHexString(uuidv7); // Run1, UNIT TESTS
-        //return ReorderUuid(Convert.ToHexString(uuidv7)); // Run2, Run3 // COMMENTED (DO NOT USE) WHEN UNIT TESTS
+        return Convert.ToHexString(uuidv7);
     }
 
     public static string ReorderUuid(string uuid)
@@ -234,28 +233,22 @@ public static class Program
         dst[14] = src[4];
         dst[15] = src[5];
         // reorder for guid internal layout
-        //bool reorderForGuidInternalLayout = true; // Run1 (not used, unreachable), Run2
-        bool reorderForGuidInternalLayout = false; // Run3
-        if (reorderForGuidInternalLayout)
-        {
-            // Run 3 shows that you don't need to do this if you will do `new Guid(convertedToHexString)`
-            var tmp0 = dst[0];
-            var tmp1 = dst[1];
-            var tmp2 = dst[2];
-            var tmp3 = dst[3];
-            dst[0] = tmp3;
-            dst[1] = tmp2;
-            dst[2] = tmp1;
-            dst[3] = tmp0;
-            var tmp4 = dst[4];
-            var tmp5 = dst[5];
-            dst[4] = tmp5;
-            dst[5] = tmp4;
-            var tmp6 = dst[6];
-            var tmp7 = dst[7];
-            dst[6] = tmp7;
-            dst[7] = tmp6;
-        }
+        var tmp0 = dst[0];
+        var tmp1 = dst[1];
+        var tmp2 = dst[2];
+        var tmp3 = dst[3];
+        dst[0] = tmp3;
+        dst[1] = tmp2;
+        dst[2] = tmp1;
+        dst[3] = tmp0;
+        var tmp4 = dst[4];
+        var tmp5 = dst[5];
+        dst[4] = tmp5;
+        dst[5] = tmp4;
+        var tmp6 = dst[6];
+        var tmp7 = dst[7];
+        dst[6] = tmp7;
+        dst[7] = tmp6;
         
         return Convert.ToHexString(dst);
     }
